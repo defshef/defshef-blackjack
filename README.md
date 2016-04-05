@@ -48,7 +48,7 @@ Here are some examples you can use for testing. Ideally you should turn these in
 * JH 8C 9S = 27, bust
 * AS KS = 21, blackjack
 * AS 5H = 16, soft
-* AS 5H 7C = 13, soft
+* AS 5H 7C = 13, hard
 * AS AC = 12, hard
 
 # License
