@@ -1,5 +1,5 @@
 (ns defshef.blackjack
-  (:require [expectations :refer [expect]]))
+  (:require [expectations :refer [expect in]]))
 
 ;; Modelling the base data
 
@@ -20,25 +20,25 @@
 (expect AssertionError (card 11 :H))
 (expect AssertionError (card 7 :T))
 
-(defn hand
-  "Helper function for building a hand
+(defn cards
+  "Helper function for building a sequence of cards
 
-  Usage: (hand 2 :H, 2 :C, 3 :S)
+  Usage: (cards 2 :H, 2 :C, 3 :S)
   "
   [& numbers-and-suits]
   (->> numbers-and-suits
        (partition 2)
        (mapv #(apply card %))))
 
-(expect [(card 2 :H) (card :K :S)] (hand 2 :H, :K :S))
-(expect [(card 2 :H) (card :K :S) (card :A :H)] (hand 2 :H, :K :S, :A :H))
+(expect [(card 2 :H) (card :K :S)] (cards 2 :H, :K :S))
+(expect [(card 2 :H) (card :K :S) (card :A :H)] (cards 2 :H, :K :S, :A :H))
 
 ;; Calculate hand value
 
 (defn- card-value
   "How much is a card worth?
 
-  In this function, aces are always hard"
+  In this function aces are always hard"
   [{:keys [number] :as card}]
   (condp #(%1 %2) number
     number? number
@@ -72,14 +72,43 @@
       [(- total 10) :hard]
       [total qualifier])))
 
-(expect [4 nil] (value (hand 2 :H, 2 :C)))
-(expect [8 nil] (value (hand 2 :H, 2 :C, 2 :D, 2 :S)))
-(expect [19 nil] (value (hand 2 :H, 2 :C, 7 :D, 8 :S)))
-(expect [21 nil] (value (hand :K :H, 5 :C, 6 :S)))
-(expect [23 :bust] (value (hand :K :H, :Q :C, 3 :S)))
-(expect [27 :bust] (value (hand :J :H, 8 :C, 9 :S)))
-(expect [21 :blackjack] (value (hand :K :H, :A :C)))
-(expect [21 :blackjack] (value (hand :A :H, 10 :S)))
-(expect [16 :soft] (value (hand :A :S, 5 :H)))
-(expect [13 :hard] (value (hand :A :S, 5 :H, 7 :H)))
-(expect [12 :hard] (value (hand :A :S, :A :H)))
+(expect [4 nil] (value (cards 2 :H, 2 :C)))
+(expect [8 nil] (value (cards 2 :H, 2 :C, 2 :D, 2 :S)))
+(expect [19 nil] (value (cards 2 :H, 2 :C, 7 :D, 8 :S)))
+(expect [21 nil] (value (cards :K :H, 5 :C, 6 :S)))
+(expect [23 :bust] (value (cards :K :H, :Q :C, 3 :S)))
+(expect [27 :bust] (value (cards :J :H, 8 :C, 9 :S)))
+(expect [21 :blackjack] (value (cards :K :H, :A :C)))
+(expect [21 :blackjack] (value (cards :A :H, 10 :S)))
+(expect [16 :soft] (value (cards :A :S, 5 :H)))
+(expect [13 :hard] (value (cards :A :S, 5 :H, 7 :H)))
+(expect [12 :hard] (value (cards :A :S, :A :H)))
+
+;; Shuffle and deal
+
+(def fresh-deck (for [s suits n numbers] (card n s)))
+
+(expect (card 2 :H) (in fresh-deck))
+(expect (card 6 :S) (in fresh-deck))
+(expect (card :Q :D) (in fresh-deck))
+(expect (card :A :C) (in fresh-deck))
+
+(defn deal
+  "Start a new game"
+  []
+  (let [deck (shuffle fresh-deck)
+        [a b c d & deck] deck]
+    {:deck deck
+     :dealer [b d]
+     :player [a c]}))
+
+(expect {:deck (drop 4 fresh-deck)
+         :dealer (cards 3 :H, 5 :H)
+         :player (cards 2 :H, 4 :H)}
+        (with-redefs [shuffle identity] (deal)))
+
+(let [stacked-deck (cards :A :H, 7 :S, :Q :H, 6 :D, :K :S, :J :C)]
+  (expect {:deck (cards :K :S, :J :C)
+           :dealer (cards 7 :S, 6 :D)
+           :player (cards :A :H, :Q :H)}
+          (with-redefs [shuffle (constantly stacked-deck)] (deal))))

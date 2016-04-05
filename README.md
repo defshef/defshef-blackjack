@@ -21,6 +21,7 @@ One thing that should become immediately apparent, is that this list is mostly v
  * Splitting
  * Insurance
  * Multiple decks
+ * Multiple players
 
 ### Modelling the base data
 
@@ -50,6 +51,12 @@ Here are some examples you can use for testing. Ideally you should turn these in
 * AS 5H = 16, soft
 * AS 5H 7C = 13, hard
 * AS AC = 12, hard
+
+### Shuffle and deal
+
+We need some way of representing the deck of cards, and then shuffling it. Ideally just use a standard collection type, but we'll need a bit of code to generate all the possible cards.
+
+Once we have a shuffled deck, we need to deal. For now we'll just worry about one player against the dealer. Initially they need two cards each, dealt one at a time alternately. We should put this into some sort of datastructure to represent the state of the table (currently 3 fields: the deck, the dealer and the player).
 
 # License
 
