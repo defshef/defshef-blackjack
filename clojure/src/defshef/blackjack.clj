@@ -33,6 +33,8 @@
 (expect [(card 2 :H) (card :K :S)] (hand 2 :H, :K :S))
 (expect [(card 2 :H) (card :K :S) (card :A :H)] (hand 2 :H, :K :S, :A :H))
 
+;; Calculate hand value
+
 (defn- card-value
   "How much is a card worth?
 
