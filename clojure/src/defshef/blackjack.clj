@@ -4,18 +4,18 @@
 ;; Modelling the base data
 
 (def suits [:H :C :D :S])
-(def numbers [2 3 4 5 6 7 8 9 10 :J :Q :K :A])
+(def ranks [2 3 4 5 6 7 8 9 10 :J :Q :K :A])
 
 (defn card
   "build a card representation"
-  [number suit]
-  {:pre [(some #{number} numbers)
+  [rank suit]
+  {:pre [(some #{rank} ranks)
          (some #{suit} suits)]}
-  {:number number
+  {:rank rank
    :suit suit})
 
-(expect 2 (:number (card 2 :H)))
-(expect :A (:number (card :A :H)))
+(expect 2 (:rank (card 2 :H)))
+(expect :A (:rank (card :A :H)))
 (expect :H (:suit (card 2 :H)))
 (expect AssertionError (card 11 :H))
 (expect AssertionError (card 7 :T))
@@ -25,8 +25,8 @@
 
   Usage: (cards 2 :H, 2 :C, 3 :S)
   "
-  [& numbers-and-suits]
-  (->> numbers-and-suits
+  [& ranks-and-suits]
+  (->> ranks-and-suits
        (partition 2)
        (mapv #(apply card %))))
 
@@ -39,12 +39,12 @@
   "How much is a card worth?
 
   In this function aces are always hard"
-  [{:keys [number] :as card}]
-  (condp #(%1 %2) number
-    number? number
+  [{:keys [rank] :as card}]
+  (condp #(%1 %2) rank
+    number? rank
     #{:J :Q :K} 10
     #{:A} 11
-    (throw (ex-info "Unknown number" {:card card}))))
+    (throw (ex-info "Unknown rank" {:card card}))))
 
 (expect 5 (card-value (card 5 :C)))
 (expect 10 (card-value (card 10 :H)))
@@ -52,11 +52,11 @@
 (expect 10 (card-value (card :Q :C)))
 (expect 10 (card-value (card :J :D)))
 (expect 11 (card-value (card :A :S)))
-(expect Throwable (card-value {:number :x}))
+(expect Throwable (card-value {:rank :x}))
 
 (def ^:private sum (partial reduce +))
 (defn- has-ace [hand]
-  (some #(= :A (:number %)) hand))
+  (some #(= :A (:rank %)) hand))
 
 (defn value
   "How much is a hand worth?"
@@ -86,7 +86,7 @@
 
 ;; Shuffle and deal
 
-(def fresh-deck (for [s suits n numbers] (card n s)))
+(def fresh-deck (for [s suits n ranks] (card n s)))
 
 (expect (card 2 :H) (in fresh-deck))
 (expect (card 6 :S) (in fresh-deck))

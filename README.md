@@ -31,7 +31,7 @@ We will also initially define just enough data types for what we know we must ca
 
  * `Suit` can be Hearts, Clubs, Diamonds or Spades
  * `Number` can be Ace, King, Queen, Jack, 10, 9, 8, 7, 6, 5, 4, 3 or 2
- * `Card` has a `Suit` and a `Number`
+ * `Card` has a `Suit` and a `Rank`
 
 Rather than attempt to model a `Deck` or a `Hand`, we'll just use collections of `Card`s.
 
