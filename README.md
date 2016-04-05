@@ -58,6 +58,16 @@ We need some way of representing the deck of cards, and then shuffling it. Ideal
 
 Once we have a shuffled deck, we need to deal. For now we'll just worry about one player against the dealer. Initially they need two cards each, dealt one at a time alternately. We should put this into some sort of datastructure to represent the state of the table (currently 3 fields: the deck, the dealer and the player).
 
+### Display the game
+
+Now that we have a representation of the underlying data of an in-progress game, it'd be nice to show something to our would-be player.
+
+At this point in the game only one of the dealer's cards should be face up, and both the dealer and player have two cards each. We should show the player the value of their hand. These are the only scenarios you need to handle at this point - we can come back and add the others later once we've implemented the next part.
+
+Helpfully, the unicode consortium has designated some glyphs for playing cards, the [section from the book](http://buildingskills.itmaybeahack.com/book/oodesign-3.1/html/blackjack/card_deck_shoe.html#unicode-images) has the details. Although the [wikipedia page](https://en.wikipedia.org/wiki/Playing_cards_in_Unicode) might be easier to use.
+
+Make sure you don't print out the next cards in the deck!
+
 # License
 
 Copyright Glen Mailer

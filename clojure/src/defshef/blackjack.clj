@@ -112,3 +112,65 @@
            :dealer (cards 7 :S, 6 :D)
            :player (cards :A :H, :Q :H)}
           (with-redefs [shuffle (constantly stacked-deck)] (deal))))
+
+(def ^:private card-faces
+  {2 "🂢" 3 "🂣" 4 "🂤" 5 "🂥" 6 "🂦" 7 "🂧" 8 "🂨" 9 "🂩" 10 "🂪"
+   :J "🂫" :Q "🂭" :K "🂮" :A "🂡"})
+(def ^:private suit-offset
+  {:S 0 :H 16 :D 32 :C 48})
+(defn- adjust-suit [[x y :as face] suit]
+  (str x (char (+ (int y) (suit-offset suit)))))
+
+(defn- render-card
+  "Render a single card"
+  ([] "🂠 ")
+  ([{:keys [rank suit]}]
+   (str (adjust-suit (card-faces rank) suit) " ")))
+
+(expect "🂠 " (render-card))
+(expect "🂡 " (render-card (card :A :S)))
+
+(defn- render-dealer
+  "Render the dealer's hand"
+  [hand]
+  (apply str
+         (render-card)
+         (map render-card (drop 1 hand))))
+
+(defn- render-player
+  "Render the player's hand"
+  [hand]
+  (let [[total qualifier] (value hand)]
+    (str (apply str (map render-card hand))
+         " "
+         (cond
+           (= :blackjack qualifier) "Blackjack!"
+           qualifier (str (name qualifier) " " total)
+           :else total))))
+
+(defn render
+  "Print out the game state neatly"
+  [{:keys [dealer player]}]
+  (str "Dealer: " (render-dealer dealer) "\n"
+       "Player: " (render-player player)))
+
+(expect
+  (str "Dealer: 🂠 🃉 " "\n"
+       "Player: 🂾 🂥  15")
+  (render {:deck (cards :K :S, 6 :D)
+           :dealer (cards 7 :S, 9 :D)
+           :player (cards :K :H, 5 :S)}))
+
+(expect
+  (str "Dealer: 🂠 🃛 " "\n"
+       "Player: 🂱 🃕  soft 16")
+  (render {:deck (cards :K :S, 6 :D)
+           :dealer (cards 7 :S, :J :C)
+           :player (cards :A :H, 5 :C)}))
+
+(expect
+  (str "Dealer: 🂠 🃛 " "\n"
+       "Player: 🂱 🃊  Blackjack!")
+  (render {:deck (cards :K :S, 6 :D)
+           :dealer (cards 7 :S, :J :C)
+           :player (cards :A :H, 10 :D)}))
