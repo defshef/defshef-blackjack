@@ -36,9 +36,20 @@ Rather than attempt to model a `Deck` or a `Hand`, we'll just use collections of
 
 ### Calculate hand value
 
-Given a hand of cards, we need to figure out what it's worth. We could treat this as just a number, but to cater for blackjack and hard/soft aces, we'll treat this as a pair of number and optional qualifier.
+Given a hand of cards, we need to figure out what it's worth. We could treat this as just a number, but to cater for bust, blackjack and hard/soft aces, we'll treat this as a pair of number and optional qualifier.
 
 Here are some examples you can use for testing. Ideally you should turn these into assertions that can be run.
+
+* 2H 2C = 4
+* 2H 2C 2D 2S = 4
+* 2H 2C 7S 8D = 19
+* KH 5C 6S = 21
+* KH QC 3S = 23, bust
+* JH 8C 9S = 27, bust
+* AS KS = 21, blackjack
+* AS 5H = 16, soft
+* AS 5H 7C = 13, soft
+* AS AC = 12, hard
 
 # License
 
