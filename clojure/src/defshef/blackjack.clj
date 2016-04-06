@@ -117,13 +117,17 @@
           (with-redefs [shuffle (constantly stacked-deck)] (deal))))
 
 (defn hit
-  "Advance the game state with a hit"
+  "Advance the game state by hitting"
   [{:keys [deck player stage] :as game}]
+  {:pre [(= stage :player)]}
   (let [[card & deck] deck
         player (conj player card)
         [_ qualifier] (value player)
         stage (if (= qualifier :bust) :dealer stage)]
     (assoc game :deck deck :player player :stage stage)))
+
+(expect AssertionError (hit {:stage :dealer}))
+(expect AssertionError (hit {:stage :done}))
 
 ; hit that doesn't bust
 (expect {:deck (cards :J :C)
@@ -144,6 +148,61 @@
               :dealer (cards 7 :S, 6 :D)
               :player (cards 10 :H, 4 :H)
               :stage :player}))
+
+(defn stand
+  "Advance the game state by standing"
+  [{:keys [stage] :as game}]
+  {:pre [(= stage :player)]}
+  (assoc game :stage :dealer))
+
+(expect AssertionError (stand {:stage :dealer}))
+(expect AssertionError (stand {:stage :done}))
+(expect :dealer (:stage (stand (deal))))
+
+(defn play-dealer
+  "Advance the game state by playing the dealer's hand"
+  [{:keys [stage] :as game}]
+  {:pre [(= stage :dealer)]}
+  (loop [{:keys [deck dealer] :as game} (assoc game :stage :done)]
+    (let [[total _] (value dealer)]
+      (if (< total 17)
+        (let [[card & deck] deck]
+          (recur (assoc game :deck deck :dealer (conj dealer card))))
+        game))))
+
+(expect AssertionError (play-dealer {:stage :player}))
+(expect AssertionError (play-dealer {:stage :done}))
+
+; dealer stands on 17+
+(expect {:deck (cards :J :C)
+         :dealer (cards 7 :S, :K :D)
+         :player (cards 3 :H, 4 :H, :K :S)
+         :stage :done}
+        (play-dealer {:deck (cards :J :C)
+                      :dealer (cards 7 :S, :K :D)
+                      :player (cards 3 :H, 4 :H, :K :S)
+                      :stage :dealer}))
+
+; dealer hits on < 17
+(expect {:deck (cards :Q :D)
+         :dealer (cards 7 :S, 3 :D, :J :C)
+         :player (cards 3 :H, 4 :H, :K :S)
+         :stage :done}
+        (play-dealer {:deck (cards :J :C, :Q :D)
+                      :dealer (cards 7 :S, 3 :D)
+                      :player (cards 3 :H, 4 :H, :K :S)
+                      :stage :dealer}))
+
+; dealer keeps going until 17+
+(expect {:deck (cards 7 :D)
+         :dealer (cards 4 :S, 3 :D, 3 :C, 4 :D, 2 :S, :J :D)
+         :player (cards 3 :H, 4 :H, :K :S)
+         :stage :done}
+        (play-dealer {:deck (cards 3 :C, 4 :D, 2 :S, :J :D, 7 :D)
+                      :dealer (cards 4 :S, 3 :D)
+                      :player (cards 3 :H, 4 :H, :K :S)
+                      :stage :dealer}))
+
 
 (def ^:private card-faces
   {2 "🂢" 3 "🂣" 4 "🂤" 5 "🂥" 6 "🂦" 7 "🂧" 8 "🂨" 9 "🂩" 10 "🂪"
