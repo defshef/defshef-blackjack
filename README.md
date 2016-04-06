@@ -56,6 +56,8 @@ Here are some examples you can use for testing. Ideally you should turn these in
 
 We need some way of representing the deck of cards, and then shuffling it. Ideally just use a standard collection type, but we'll need a bit of code to generate all the possible cards.
 
+If you're using a language which enforces referential transparency (like Haskell), then shuffling can be a bit tricky. I recommend having a small function which returns a new shuffled deck, and then have your `deal` function accept a shuffled deck. This will stop the randomness from "infecting" all your other functions with this impurity.
+
 Once we have a shuffled deck, we need to deal. For now we'll just worry about one player against the dealer. Initially they need two cards each, dealt one at a time alternately. We should put this into some sort of datastructure to represent the state of the table (currently 3 fields: the deck, the dealer and the player).
 
 ### Hit / Stand & basic gameplay

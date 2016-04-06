@@ -55,22 +55,22 @@
 (expect Throwable (card-value {:rank :x}))
 
 (def ^:private sum (partial reduce +))
-(defn- has-ace [hand]
-  (some #(= :A (:rank %)) hand))
+(defn- is-ace [card] (-> card :rank (= :A)))
 
 (defn value
   "How much is a hand worth?"
   [hand]
   (let [total (sum (map card-value hand))
-        ace (has-ace hand)
-        qualifier (cond (> total 21) :bust
-                        (and (= 21 total) (= 2 (count hand))) :blackjack
+        ace (some is-ace hand)
+        pair (= 2 (count hand))
+        qualifier (cond (and (= 21 total) pair) :blackjack
+                        (and ace (> total 21)) :hard
+                        (> total 21) :bust
                         ace :soft
-                        :else nil)]
-    ; bust with an ace? Use lower value instead
-    (if (and ace (= qualifier :bust))
-      [(- total 10) :hard]
-      [total qualifier])))
+                        :else nil)
+        ; bust with an ace? Use lower value instead
+        total (if (= qualifier :hard) (- total 10) total)]
+    [total qualifier]))
 
 (expect [4 nil] (value (cards 2 :H, 2 :C)))
 (expect [8 nil] (value (cards 2 :H, 2 :C, 2 :D, 2 :S)))

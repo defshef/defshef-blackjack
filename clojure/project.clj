@@ -3,4 +3,4 @@
   :pedantic? :abort
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [expectations "2.0.9" :exclusions [org.clojure/clojure]]]
-  :plugins [[lein-autoexpect "1.8.1-SNAPSHOT"]])
+  :plugins [[lein-autoexpect "1.9.0"]])
