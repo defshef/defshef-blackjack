@@ -100,18 +100,50 @@
         [a b c d & deck] deck]
     {:deck deck
      :dealer [b d]
-     :player [a c]}))
+     :player [a c]
+     :stage :player}))
 
 (expect {:deck (drop 4 fresh-deck)
          :dealer (cards 3 :H, 5 :H)
-         :player (cards 2 :H, 4 :H)}
+         :player (cards 2 :H, 4 :H)
+         :stage :player}
         (with-redefs [shuffle identity] (deal)))
 
 (let [stacked-deck (cards :A :H, 7 :S, :Q :H, 6 :D, :K :S, :J :C)]
   (expect {:deck (cards :K :S, :J :C)
            :dealer (cards 7 :S, 6 :D)
-           :player (cards :A :H, :Q :H)}
+           :player (cards :A :H, :Q :H)
+           :stage :player}
           (with-redefs [shuffle (constantly stacked-deck)] (deal))))
+
+(defn hit
+  "Advance the game state with a hit"
+  [{:keys [deck player stage] :as game}]
+  (let [[card & deck] deck
+        player (conj player card)
+        [_ qualifier] (value player)
+        stage (if (= qualifier :bust) :dealer stage)]
+    (assoc game :deck deck :player player :stage stage)))
+
+; hit that doesn't bust
+(expect {:deck (cards :J :C)
+         :dealer (cards 7 :S, 6 :D)
+         :player (cards 3 :H, 4 :H, :K :S)
+         :stage :player}
+        (hit {:deck (cards :K :S, :J :C)
+              :dealer (cards 7 :S, 6 :D)
+              :player (cards 3 :H, 4 :H)
+              :stage :player}))
+
+; hit that goes bust
+(expect {:deck (cards :J :C)
+         :dealer (cards 7 :S, 6 :D)
+         :player (cards 10 :H, 4 :H, :K :S)
+         :stage :dealer}
+        (hit {:deck (cards :K :S, :J :C)
+              :dealer (cards 7 :S, 6 :D)
+              :player (cards 10 :H, 4 :H)
+              :stage :player}))
 
 (def ^:private card-faces
   {2 "🂢" 3 "🂣" 4 "🂤" 5 "🂥" 6 "🂦" 7 "🂧" 8 "🂨" 9 "🂩" 10 "🂪"
@@ -125,7 +157,7 @@
   "Render a single card"
   ([] "🂠 ")
   ([{:keys [rank suit]}]
-   (str (adjust-suit (card-faces rank) suit) " ")))
+   (-> rank (card-faces) (adjust-suit suit) (str " "))))
 
 (expect "🂠 " (render-card))
 (expect "🂡 " (render-card (card :A :S)))

@@ -13,8 +13,8 @@ One thing that should become immediately apparent, is that this list is mostly v
  * Modelling the base data
  * Calculate hand value
  * Shuffle and deal
+ * Hit/Stand & basic gameplay
  * Display the game
- * Hit/Stand
  * Betting, winning and losing
  * A game session
  * Doubling
@@ -58,11 +58,22 @@ We need some way of representing the deck of cards, and then shuffling it. Ideal
 
 Once we have a shuffled deck, we need to deal. For now we'll just worry about one player against the dealer. Initially they need two cards each, dealt one at a time alternately. We should put this into some sort of datastructure to represent the state of the table (currently 3 fields: the deck, the dealer and the player).
 
+### Hit / Stand & basic gameplay
+
+Now that we've got a way to represent the state of the game, we need a way to advance it. We'll write some functions to represent the actions a player can take, creating a brand new version of the game state each time. The tools in most functional languages should push you towards an immutable-data approach like this.
+
+I suggest introducing a new field to indicate what stage the game is in: player, dealer or done. This will allow us to write the logic for playing the dealer's hand independently, rather that having it hidden inside the hit and stand operations
+
+* `hit` Take the card from the top of the deck and give it to the player
+* If the player's hand value is bust after a hit, move to dealer stage
+* `stand` Stop taking cards, move to dealer stage
+* `play-dealer` The dealer takes cards until they have 17 or more, move to the done stage
+
 ### Display the game
 
-Now that we have a representation of the underlying data of an in-progress game, it'd be nice to show something to our would-be player.
+Now that we have a representation of the underlying data of the game, it'd be nice to show something to our would-be player.
 
-At this point in the game only one of the dealer's cards should be face up, and both the dealer and player have two cards each. We should show the player the value of their hand. These are the only scenarios you need to handle at this point - we can come back and add the others later once we've implemented the next part.
+> TODO
 
 Helpfully, the unicode consortium has designated some glyphs for playing cards, the [section from the book](http://buildingskills.itmaybeahack.com/book/oodesign-3.1/html/blackjack/card_deck_shoe.html#unicode-images) has the details. Although the [wikipedia page](https://en.wikipedia.org/wiki/Playing_cards_in_Unicode) might be easier to use.
 
