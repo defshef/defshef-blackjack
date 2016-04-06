@@ -116,6 +116,8 @@
            :stage :player}
           (with-redefs [shuffle (constantly stacked-deck)] (deal))))
 
+;; Hit / Stand & basic gameplay
+
 (defn hit
   "Advance the game state by hitting"
   [{:keys [deck player stage] :as game}]
@@ -203,6 +205,7 @@
                       :player (cards 3 :H, 4 :H, :K :S)
                       :stage :dealer}))
 
+;; Display the game
 
 (def ^:private card-faces
   {2 "🂢" 3 "🂣" 4 "🂤" 5 "🂥" 6 "🂦" 7 "🂧" 8 "🂨" 9 "🂩" 10 "🂪"
@@ -220,6 +223,7 @@
 
 (expect "🂠 " (render-card))
 (expect "🂡 " (render-card (card :A :S)))
+(expect "🃍 " (render-card (card :Q :D)))
 
 (defn- render-dealer
   "Render the dealer's hand"
