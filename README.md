@@ -75,9 +75,9 @@ I suggest introducing a new field to indicate what stage the game is in: player,
 
 Now that we have a representation of the underlying data of the game, it'd be nice to show something to our would-be player.
 
-> TODO
+> TODO: discuss game states
 
-Helpfully, the unicode consortium has designated some glyphs for playing cards, the [section from the book](http://buildingskills.itmaybeahack.com/book/oodesign-3.1/html/blackjack/card_deck_shoe.html#unicode-images) has the details. Although the [wikipedia page](https://en.wikipedia.org/wiki/Playing_cards_in_Unicode) might be easier to use.
+This is a bit of a rabbithole to implement, but the unicode consortium has designated some glyphs for playing cards. The [section from the book](http://buildingskills.itmaybeahack.com/book/oodesign-3.1/html/blackjack/card_deck_shoe.html#unicode-images) has the details. Although the [wikipedia page](https://en.wikipedia.org/wiki/Playing_cards_in_Unicode) might be easier to use.
 
 Make sure you don't print out the next cards in the deck!
 
