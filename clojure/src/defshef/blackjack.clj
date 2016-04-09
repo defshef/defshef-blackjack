@@ -61,15 +61,18 @@
   "How much is a hand worth?"
   [hand]
   (let [total (sum (map card-value hand))
-        ace (some is-ace hand)
         pair (= 2 (count hand))
-        qualifier (cond (and (= 21 total) pair) :blackjack
-                        (and ace (> total 21)) :hard
-                        (> total 21) :bust
-                        ace :soft
-                        :else nil)
+        bust (> total 21)
+        ace (some is-ace hand)
+        hard-ace (and bust ace)
         ; bust with an ace? Use lower value instead
-        total (if (= qualifier :hard) (- total 10) total)]
+        total (if hard-ace (- total 10) total)
+        bust (> total 21)
+        qualifier (cond (and (= 21 total) pair) :blackjack
+                        bust :bust
+                        hard-ace :hard
+                        ace :soft
+                        :else nil)]
     [total qualifier]))
 
 (expect [4 nil] (value (cards 2 :H, 2 :C)))
@@ -77,12 +80,14 @@
 (expect [19 nil] (value (cards 2 :H, 2 :C, 7 :D, 8 :S)))
 (expect [21 nil] (value (cards :K :H, 5 :C, 6 :S)))
 (expect [23 :bust] (value (cards :K :H, :Q :C, 3 :S)))
+(expect [23 :bust] (value (cards 9 :H, :A :C, 3 :S, :K :C)))
 (expect [27 :bust] (value (cards :J :H, 8 :C, 9 :S)))
 (expect [21 :blackjack] (value (cards :K :H, :A :C)))
 (expect [21 :blackjack] (value (cards :A :H, 10 :S)))
 (expect [16 :soft] (value (cards :A :S, 5 :H)))
 (expect [13 :hard] (value (cards :A :S, 5 :H, 7 :H)))
 (expect [12 :hard] (value (cards :A :S, :A :H)))
+(expect [21 :hard] (value (cards 10 :H, :Q :C, :A :S)))
 
 ;; Shuffle and deal
 
