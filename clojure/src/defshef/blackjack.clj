@@ -1,5 +1,6 @@
 (ns defshef.blackjack
-  (:require [expectations :refer [expect in]]))
+  (:require [clojure.string :refer [trim]]
+            [expectations :refer [expect in]]))
 
 ;; Modelling the base data
 
@@ -311,3 +312,38 @@
            :dealer (cards 5 :S, :J :C, :K :S)
            :player (cards :A :H, 5 :C)
            :stage :dealer}))
+
+;; Tying it all together
+
+(defn- player-turn [{:keys [player stage]}]
+  (let [[_ qualifier] (value player)]
+    (cond (not= stage :player) nil
+          (#{:blackjack :bust} qualifier) '#{stand}
+          :else '#{hit stand})))
+
+(defn- read-action [actions]
+  (apply println "Enter one of: quit" (map name actions))
+  (let [input (symbol (trim (read-line)))]
+    (cond (= 'quit input) (throw (ex-info "quit" {}))
+          (actions input) (resolve input)
+          :else (recur actions))))
+
+(defn play-unnecessarily-generic-game [game possible-actions finish]
+  (loop [game game]
+    ; Check what choice of actions there is
+    (let [actions (possible-actions game)]
+
+      (if (seq actions)
+        ; offer and apply choices
+        (do
+          (println (render game))
+          (recur ((read-action actions) game)))
+
+        ; no choices? finish the game
+        (println (render (finish game)))))))
+
+(defn play-blackjack [game]
+  (play-unnecessarily-generic-game game player-turn play-dealer))
+
+(defn start-game []
+  (play-blackjack (deal)))

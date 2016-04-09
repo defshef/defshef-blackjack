@@ -16,13 +16,14 @@ One thing that should become immediately apparent, is that this list is mostly v
  * Hit/Stand & basic gameplay
  * Display the game
  * Tying it all together
- * Betting, winning and losing
- * A game session
- * Doubling
- * Splitting
- * Insurance
- * Multiple decks
- * Multiple players
+ * Extensions
+   * Betting
+   * A game session
+   * Doubling
+   * Splitting
+   * Insurance
+   * Multiple decks
+   * Multiple players
 
 ### Modelling the base data
 
@@ -87,6 +88,22 @@ In the previous section we introduced three different game stages, the display o
 This is a bit of a rabbithole to implement, but the unicode consortium has designated some glyphs for playing cards. The [section from the book](http://buildingskills.itmaybeahack.com/book/oodesign-3.1/html/blackjack/card_deck_shoe.html#unicode-images) has the details. Although the [wikipedia page](https://en.wikipedia.org/wiki/Playing_cards_in_Unicode) might be easier to use. Alternatively, you can just use short strings like "AH" for ace of hearts etc.
 
 Make sure you don't print out the next cards in the deck!
+
+### Tying it all together
+
+Now comes the tricky bit, especially if you're using a language that enforces purity at the type level.
+
+So far we've implemented various pure functions that hopefully are recognisable as portions of an implementation of a blackjack game, but now we need to combine them together into a playable game. This will involve user input and output, which cannot be pure.
+
+The missing piece we have is deciding which actions to offer the user based on the current state of the game. Along with this we'll need some sort of game loop. First we'll `deal` a hand and display the game to the player. We'll then offer them options until they're done. Once the player has either stood or bust, we'll play out the dealer's hand.
+
+### A playable game!
+
+If you've got this far then you should have a playable (albiet brief) game. For the most part, each section has consisted of writing new functions which build on the ones from before. The following sections expand on the game we have built mostly by modifying and extending.
+
+***********
+
+### Extensions
 
 # License
 
