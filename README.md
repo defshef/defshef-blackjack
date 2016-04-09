@@ -15,6 +15,7 @@ One thing that should become immediately apparent, is that this list is mostly v
  * Shuffle and deal
  * Hit/Stand & basic gameplay
  * Display the game
+ * Tying it all together
  * Betting, winning and losing
  * A game session
  * Doubling
@@ -75,9 +76,13 @@ I suggest introducing a new field to indicate what stage the game is in: player,
 
 Now that we have a representation of the underlying data of the game, it'd be nice to show something to our would-be player.
 
-> TODO: discuss game states
+In the previous section we introduced three different game stages, the display of the game will need to be slightly different depending on the game stage.
 
-This is a bit of a rabbithole to implement, but the unicode consortium has designated some glyphs for playing cards. The [section from the book](http://buildingskills.itmaybeahack.com/book/oodesign-3.1/html/blackjack/card_deck_shoe.html#unicode-images) has the details. Although the [wikipedia page](https://en.wikipedia.org/wiki/Playing_cards_in_Unicode) might be easier to use.
+* `player` - When we're in the player stage we should only show one card from the dealer, and should not report their hand value.
+* `dealer` - When in the dealer stage  we can show the all of dealer's cards and their hand value
+* `done` - There aren't actually any rendering changes to do here yet. When we get on to betting later it'll come into play.
+
+This is a bit of a rabbithole to implement, but the unicode consortium has designated some glyphs for playing cards. The [section from the book](http://buildingskills.itmaybeahack.com/book/oodesign-3.1/html/blackjack/card_deck_shoe.html#unicode-images) has the details. Although the [wikipedia page](https://en.wikipedia.org/wiki/Playing_cards_in_Unicode) might be easier to use. Alternatively, you can just use short strings like "AH" for ace of hearts etc.
 
 Make sure you don't print out the next cards in the deck!
 

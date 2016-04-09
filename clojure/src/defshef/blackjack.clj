@@ -225,47 +225,84 @@
 (expect "🂡 " (render-card (card :A :S)))
 (expect "🃍 " (render-card (card :Q :D)))
 
-(defn- render-dealer
-  "Render the dealer's hand"
+(defn- render-obscured
+  "Render a hand with the first card obscured"
   [hand]
   (apply str
          (render-card)
          (map render-card (drop 1 hand))))
 
-(defn- render-player
-  "Render the player's hand"
+(defn- render-hand
+  "Render a whole hand"
   [hand]
   (let [[total qualifier] (value hand)]
     (str (apply str (map render-card hand))
          " "
-         (cond
-           (= :blackjack qualifier) "Blackjack!"
-           qualifier (str (name qualifier) " " total)
-           :else total))))
+         (case qualifier
+           :blackjack "Blackjack!"
+           :bust (str total " BUST")
+           (:hard :soft) (str (name qualifier) " " total)
+           total))))
 
 (defn render
   "Print out the game state neatly"
-  [{:keys [dealer player]}]
-  (str "Dealer: " (render-dealer dealer) "\n"
-       "Player: " (render-player player)))
+  [{:keys [dealer player stage]}]
+  (let [render-dealer (if (= stage :player) render-obscured render-hand)]
+    (str "Dealer: " (render-dealer dealer) "\n"
+         "Player: " (render-hand player))))
 
 (expect
   (str "Dealer: 🂠 🃉 " "\n"
        "Player: 🂾 🂥  15")
   (render {:deck (cards :K :S, 6 :D)
            :dealer (cards 7 :S, 9 :D)
-           :player (cards :K :H, 5 :S)}))
+           :player (cards :K :H, 5 :S)
+           :stage :player}))
 
 (expect
   (str "Dealer: 🂠 🃛 " "\n"
        "Player: 🂱 🃕  soft 16")
   (render {:deck (cards :K :S, 6 :D)
            :dealer (cards 7 :S, :J :C)
-           :player (cards :A :H, 5 :C)}))
+           :player (cards :A :H, 5 :C)
+           :stage :player}))
+
+(expect
+  (str "Dealer: 🂠 🃛 " "\n"
+       "Player: 🂱 🂪 🃕  hard 16")
+  (render {:deck (cards :K :S, 6 :D)
+           :dealer (cards 7 :S, :J :C)
+           :player (cards :A :H, 10 :S, 5 :C)
+           :stage :player}))
 
 (expect
   (str "Dealer: 🂠 🃛 " "\n"
        "Player: 🂱 🃊  Blackjack!")
   (render {:deck (cards :K :S, 6 :D)
            :dealer (cards 7 :S, :J :C)
-           :player (cards :A :H, 10 :D)}))
+           :player (cards :A :H, 10 :D)
+           :stage :player}))
+
+(expect
+  (str "Dealer: 🂠 🃛 " "\n"
+       "Player: 🂶 🃊 🃋  26 BUST")
+  (render {:deck (cards :K :S, 6 :D)
+           :dealer (cards 7 :S, :J :C)
+           :player (cards 6 :H, 10 :D, :J :D)
+           :stage :player}))
+
+(expect
+  (str "Dealer: 🂧 🃉  16" "\n"
+       "Player: 🂾 🂥  15")
+  (render {:deck (cards :K :S, 6 :D)
+           :dealer (cards 7 :S, 9 :D)
+           :player (cards :K :H, 5 :S)
+           :stage :dealer}))
+
+(expect
+  (str "Dealer: 🂥 🃛 🂮  25 BUST" "\n"
+       "Player: 🂱 🃕  soft 16")
+  (render {:deck (cards 6 :D)
+           :dealer (cards 5 :S, :J :C, :K :S)
+           :player (cards :A :H, 5 :C)
+           :stage :dealer}))
