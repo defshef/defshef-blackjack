@@ -211,6 +211,69 @@
                       :player (cards 3 :H, 4 :H, :K :S)
                       :stage :dealer}))
 
+(defn who-won
+  ":player, :dealer, :draw ?"
+  [{:keys [player dealer stage] :as game}]
+  {:pre [(= stage :done)]}
+  (let [[p-total p-qualifier] (value player)
+        [d-total d-qualifier] (value dealer)]
+    (cond (= :blackjack p-qualifier d-qualifier) :draw
+          (= :blackjack d-qualifier) :dealer
+          (= :blackjack p-qualifier) :player
+          (= :bust p-qualifier) :dealer
+          (= :bust d-qualifier) :player
+          (= p-total d-total) :draw
+          (> d-total p-total) :dealer
+          (> p-total d-total) :player)))
+
+(expect AssertionError (who-won {:stage :player}))
+(expect AssertionError (who-won {:stage :dealer}))
+
+(expect :dealer ; not bust, dealer higher
+        (who-won {:stage :done, :deck (cards)
+                  :dealer (cards 8 :H, 10 :C)
+                  :player (cards 3 :H, 4 :H, :K :S)}))
+
+(expect :player ; not bust, player higher
+        (who-won {:stage :done, :deck (cards)
+                  :dealer (cards 7 :H, 10 :C)
+                  :player (cards 5 :H, 4 :H, :K :S)}))
+
+(expect :draw ; not bust, same score
+        (who-won {:stage :done, :deck (cards)
+                  :dealer (cards 7 :H, 10 :C)
+                  :player (cards 3 :H, 4 :H, :K :S)}))
+
+(expect :player ; dealer bust
+        (who-won {:stage :done, :deck (cards)
+                  :dealer (cards 6 :H, 10 :C, 10 :D)
+                  :player (cards 3 :H, 4 :H, :K :S)}))
+
+(expect :dealer ; player bust
+        (who-won {:stage :done, :deck (cards)
+                  :dealer (cards 7 :H, 10 :C)
+                  :player (cards 4 :H, :K :S, :J :C)}))
+
+(expect :dealer ; both bust
+        (who-won {:stage :done, :deck (cards)
+                  :dealer (cards 6 :H, 10 :C, :J :D)
+                  :player (cards 4 :H, :K :S, :J :C)}))
+
+(expect :player ; blackjack
+        (who-won {:stage :done, :deck (cards)
+                  :dealer (cards 6 :H, 10 :C, 5 :D)
+                  :player (cards 10 :H, :A :S)}))
+
+(expect :dealer ; dealer blackjack
+        (who-won {:stage :done, :deck (cards)
+                  :dealer (cards 10 :H, :A :S)
+                  :player (cards 6 :H, 10 :C, 5 :D)}))
+
+(expect :draw ; both blackjack
+        (who-won {:stage :done, :deck (cards)
+                  :dealer (cards 10 :H, :A :S)
+                  :player (cards :J :D, :A :C)}))
+
 ;; Display the game
 
 (def ^:private card-faces
@@ -250,12 +313,22 @@
            (:hard :soft) (str (name qualifier) " " total)
            total))))
 
+(defn- render-winner
+  "Render the win announce line"
+  [game]
+  (case (who-won game)
+    :dealer "Dealer wins!"
+    :player "Player wins!"
+    :draw "Draw"))
+
 (defn render
   "Print out the game state neatly"
-  [{:keys [dealer player stage]}]
+  [{:keys [dealer player stage] :as game}]
   (let [render-dealer (if (= stage :player) render-obscured render-hand)]
     (str "Dealer: " (render-dealer dealer) "\n"
-         "Player: " (render-hand player))))
+         "Player: " (render-hand player)
+         (if (= stage :done)
+           (str "\n" (render-winner game))))))
 
 (expect
   (str "Dealer: 🂠 🃉 " "\n"
@@ -298,10 +371,10 @@
            :stage :player}))
 
 (expect
-  (str "Dealer: 🂧 🃉  16" "\n"
+  (str "Dealer: 🂨 🃉  17" "\n"
        "Player: 🂾 🂥  15")
   (render {:deck (cards :K :S, 6 :D)
-           :dealer (cards 7 :S, 9 :D)
+           :dealer (cards 8 :S, 9 :D)
            :player (cards :K :H, 5 :S)
            :stage :dealer}))
 
@@ -312,6 +385,33 @@
            :dealer (cards 5 :S, :J :C, :K :S)
            :player (cards :A :H, 5 :C)
            :stage :dealer}))
+
+(expect
+  (str "Dealer: 🂥 🃛 🂮  25 BUST" "\n"
+       "Player: 🂱 🃕  soft 16" "\n"
+       "Player wins!")
+  (render {:deck (cards 6 :D)
+           :dealer (cards 5 :S, :J :C, :K :S)
+           :player (cards :A :H, 5 :C)
+           :stage :done}))
+
+(expect
+  (str "Dealer: 🂨 🃉  17" "\n"
+       "Player: 🂾 🂥  15" "\n"
+       "Dealer wins!")
+  (render {:deck (cards :K :S, 6 :D)
+           :dealer (cards 8 :S, 9 :D)
+           :player (cards :K :H, 5 :S)
+           :stage :done}))
+
+(expect
+  (str "Dealer: 🂦 🃛 🂴  20" "\n"
+       "Player: 🂹 🂱  soft 20" "\n"
+       "Draw")
+  (render {:deck (cards :K :S, 6 :D)
+           :dealer (cards 6 :S, :J :C, 4 :H)
+           :player (cards 9 :H, :A :H)
+           :stage :done}))
 
 ;; Tying it all together
 

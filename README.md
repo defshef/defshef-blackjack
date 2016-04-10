@@ -75,6 +75,18 @@ I suggest introducing a new field to indicate what stage the game is in: player,
 * `stand` Stop taking cards, move to dealer stage
 * `play-dealer` The dealer takes cards until they have 17 or more, move to the done stage
 
+It will also be useful to write a function which accepts a game in the done stage, and tells us whether the dealer or the player won (or if it was a draw). Here are some sceanarios to check:
+
+* dealer 18, player 17 = dealer wins
+* player 19, dealer 18 = player wins
+* player 18, dealer 18 = draw
+* player 15, dealer 25 = player wins
+* player 22, dealer 17 = dealer wins
+* player 22, dealer 22 = dealer wins
+* player blackjack, dealer 21 = player wins
+* player 21, dealer blackjack = dealer wins
+* player blackjack, dealer blackjack = draw
+
 ### Display the game
 
 Now that we have a representation of the underlying data of the game, it'd be nice to show something to our would-be player.
@@ -82,8 +94,8 @@ Now that we have a representation of the underlying data of the game, it'd be ni
 In the previous section we introduced three different game stages, the display of the game will need to be slightly different depending on the game stage.
 
 * `player` - When we're in the player stage we should only show one card from the dealer, and should not report their hand value.
-* `dealer` - When in the dealer stage  we can show the all of dealer's cards and their hand value
-* `done` - There aren't actually any rendering changes to do here yet. When we get on to betting later it'll come into play.
+* `dealer` - When in the dealer stage we can show the all of dealer's cards and their hand value
+* `done` - When in the done stage we can reveal who the winner is
 
 This is a bit of a rabbithole to implement, but the unicode consortium has designated some glyphs for playing cards. The [section from the book](http://buildingskills.itmaybeahack.com/book/oodesign-3.1/html/blackjack/card_deck_shoe.html#unicode-images) has the details. Although the [wikipedia page](https://en.wikipedia.org/wiki/Playing_cards_in_Unicode) might be easier to use. Alternatively, you can just use short strings like "AH" for ace of hearts etc.
 
