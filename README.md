@@ -48,7 +48,7 @@ Here are some examples you can use for testing. Ideally you should turn these in
 * 2H 2C 7S 8D = 19
 * KH 5C 6S = 21
 * KH QC 3S = 23, bust
-* 9H AC 3S = 23, bust
+* 9H AC 3S KS = 23, bust
 * JH 8C 9S = 27, bust
 * AS KS = 21, blackjack
 * AS 5H = 16, soft

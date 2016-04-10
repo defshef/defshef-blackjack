@@ -118,6 +118,8 @@ isAce _ = False
 -- HandValue 21 None
 -- >>> value (cards "KH QC 3S")
 -- HandValue 23 Bust
+-- >>> value (cards "9H AC 3S KS")
+-- HandValue 23 Bust
 -- >>> value (cards "JH 8C 9S")
 -- HandValue 27 Bust
 -- >>> value (cards "AS KS")
@@ -128,19 +130,22 @@ isAce _ = False
 -- HandValue 13 Hard
 -- >>> value (cards "AS AC")
 -- HandValue 12 Hard
+-- >>> value (cards "10H QC AS")
+-- HandValue 21 Hard
 value :: Hand -> HandValue
-value hand = HandValue hardTotal qualifier
+value hand = HandValue total qualifier
     where
-        total = sum $ map cardValue hand
-        hardTotal
-            | qualifier == Hard = total - 10
-            | otherwise = total
+        initialTotal = sum $ map cardValue hand
         ace = any isAce hand
+        hardAce = ace && initialTotal > 21
+        total
+            | hardAce = initialTotal - 10
+            | otherwise = initialTotal
         pair = length hand == 2
         qualifier
-            | ace && total > 21 = Hard
             | total > 21 = Bust
             | total == 21 && pair = Blackjack
+            | hardAce = Hard
             | ace = Soft
             | otherwise = None
 
