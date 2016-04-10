@@ -18,9 +18,11 @@ type Deck = [Card]
 data HandQualifier = None | Soft | Hard | Bust | Blackjack deriving (Show, Eq)
 data HandValue = HandValue Int HandQualifier deriving (Show, Eq)
 
+data Stage = Player | Dealer | Done deriving (Show, Eq)
 data Game = Game { deck :: Deck
                  , player :: Hand
                  , dealer :: Hand
+                 , stage :: Stage
                  } deriving (Show, Eq)
 
 instance Show Suit where
@@ -102,6 +104,10 @@ parseSuit "C" = Clubs
 parseSuit "D" = Diamonds
 parseSuit "S" = Spades
 
+------------------------------------
+--- Calculate hand value
+------------------------------------
+
 isAce :: Card -> Bool
 isAce (Card Ace _) = True
 isAce _ = False
@@ -157,6 +163,10 @@ cardValue (Card rank _)
     | rank == Ace = 11
     | otherwise = 10
 
+------------------------------------
+--- Shuffle & deal
+------------------------------------
+
 -- | The whole deck
 freshDeck :: Deck
 freshDeck = [Card r s | s <- [(Hearts)..Spades], r <- [Pip 2..Ace]]
@@ -167,8 +177,33 @@ shuffledDeck = Shuffle.shuffleM freshDeck
 
 -- | Start a game
 -- >>> deal $ cards "AS 4D QH 6C 7H 3C"
--- Game {deck = [Card 7 H,Card 3 C], player = [Card A S,Card Q H], dealer = [Card 4 D,Card 6 C]}
+-- Game {deck = [Card 7 H,Card 3 C], player = [Card A S,Card Q H], dealer = [Card 4 D,Card 6 C], stage = Player}
 deal :: Deck -> Game
 deal (a:b:c:d:leftover) = Game { deck=leftover
                                , player=[a, c]
-                               , dealer=[b, d] }
+                               , dealer=[b, d]
+                               , stage=Player }
+
+
+------------------------------------
+--- Hit / Stand & basic gameplay
+------------------------------------
+
+-- | Hit
+--
+-- Takes another card:
+-- >>> hit Game {deck = cards "AC", player = cards "6C 10D", dealer = cards "7S KC", stage = Player}
+-- Game {deck = [], player = [Card 6 C,Card 10 D,Card A C], dealer = [Card 7 S,Card K C], stage = Player}
+--
+-- Moves to dealer if bust:
+-- >>> hit Game {deck = cards "10C", player = cards "6C 10D", dealer = cards "7S KC", stage = Player}
+-- Game {deck = [], player = [Card 6 C,Card 10 D,Card 10 C], dealer = [Card 7 S,Card K C], stage = Dealer}
+hit :: Game -> Game
+hit game = game { deck=remaining, player=player', stage=stage' }
+    where
+        (card:remaining) = deck game
+        player' = player game ++ [card]
+        HandValue _ qualifier = value player'
+        stage'
+            | qualifier == Bust = Dealer
+            | otherwise = stage game
