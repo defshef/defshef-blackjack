@@ -1,6 +1,6 @@
 # (defshef blackjack)
 
-A practical session for functional programming approaches based on http://buildingskills.itmaybeahack.com/book/oodesign-3.1/html/index.html#blackjack
+A practical session for functional programming approaches based on [this book](http://buildingskills.itmaybeahack.com/book/oodesign-3.1/html/index.html#blackjack). You might also find this non-programmer [overview of blackjack](https://www.pagat.com/banking/blackjack.html) useful.
 
 The link above gives a good overview of the game itself, but neglects to frame this as a problem requiring a solution. It then goes on to model the game in detail, building a complete simulation.
 
