@@ -8,6 +8,15 @@ Rather than take this approach, I've split the overall game into a series of sub
 
 One thing that should become immediately apparent, is that this list is mostly verbs, whereas the original solution is discussed mostly in terms of nouns. I don't think this is necessarily an OO vs FP distinction.
 
+## Pick an implementation language
+
+ * Clojure
+    * [Quickstart](./clojure/quickstart.md)
+    * [Sample Solution](./clojure)
+ * Haskell
+    * (incomplete) [Sample Solution](./haskell)
+ * Any Others? Pull requests welcome!
+
 ## Sub-problems
 
  * Modelling the base data
@@ -117,7 +126,9 @@ If you've got this far then you should have a playable (albiet brief) game. For 
 
 ### Extensions
 
-# License
+Currently left as an exercise for the reader.
+
+## License
 
 Copyright Glen Mailer
 
