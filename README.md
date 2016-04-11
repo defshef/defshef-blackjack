@@ -84,7 +84,7 @@ I suggest introducing a new field to indicate what stage the game is in: player,
 * `stand` Stop taking cards, move to dealer stage
 * `play-dealer` The dealer takes cards until they have 17 or more, move to the done stage
 
-It will also be useful to write a function which accepts a game in the done stage, and tells us whether the dealer or the player won (or if it was a draw). Here are some sceanarios to check:
+It will also be useful to write a function which accepts a game in the done stage, and tells us whether the dealer or the player won (or if it was a draw). Here are some scenarios to check:
 
 * dealer 18, player 17 = dealer wins
 * player 19, dealer 18 = player wins

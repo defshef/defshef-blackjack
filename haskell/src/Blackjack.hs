@@ -24,6 +24,7 @@ data Game = Game { deck :: Deck
                  , dealer :: Hand
                  , stage :: Stage
                  } deriving (Show, Eq)
+data Winner = PlayerWins | DealerWins | Draw deriving (Show, Eq)
 
 instance Show Suit where
     show Hearts = "H"
@@ -207,3 +208,88 @@ hit game = game { deck=remaining, player=player', stage=stage' }
         stage'
             | qualifier == Bust = Dealer
             | otherwise = stage game
+
+-- | Stand
+--
+-- Stops taking cards
+-- >>> stand Game { deck = cards "AC", player = cards "8C 10D", dealer = cards "7S KC", stage = Player}
+-- Game {deck = [Card A C], player = [Card 8 C,Card 10 D], dealer = [Card 7 S,Card K C], stage = Dealer}
+stand :: Game -> Game
+stand game = game { stage=Dealer }
+
+-- | Play dealer
+--
+-- Dealer stands on 17
+-- >>> playDealer Game {deck = cards "AC", player = cards "8C 10D", dealer = cards "7S KC", stage = Dealer}
+-- Game {deck = [Card A C], player = [Card 8 C,Card 10 D], dealer = [Card 7 S,Card K C], stage = Done}
+--
+-- Dealer plays on under 17
+-- >>> playDealer Game {deck = cards "6C", player = cards "8C 10D", dealer = cards "5S KC", stage = Dealer}
+-- Game {deck = [], player = [Card 8 C,Card 10 D], dealer = [Card 5 S,Card K C,Card 6 C], stage = Done}
+--
+-- Dealer keeps playing until over 17
+-- >>> playDealer Game {deck = cards "3C 4D 2S JD 7D", player = cards "8C 10D", dealer = cards "4S 3D", stage = Dealer}
+-- Game {deck = [Card 7 D], player = [Card 8 C,Card 10 D], dealer = [Card 4 S,Card 3 D,Card 3 C,Card 4 D,Card 2 S,Card J D], stage = Done}
+playDealer :: Game -> Game
+playDealer game
+    | total < 17 = playDealer $ game {deck=deck', dealer=dealer', stage=Dealer}
+    | otherwise = game {deck=deck game, dealer=dealer game, stage=Done}
+    where
+        HandValue total _ = value $ dealer game
+        (card:deck') = deck game
+        dealer' = dealer game ++ [card]
+
+-- | Who won?
+--
+-- not bust, dealer higher
+-- >>> whoWon Game {deck = [], player = cards "8C 10D", dealer = cards "JS KC", stage = Done}
+-- DealerWins
+--
+-- not bust, player higher
+-- >>> whoWon Game {deck = [], player = cards "10C 10D", dealer = cards "9S KC", stage = Done}
+-- PlayerWins
+--
+-- not bust, same score
+-- >>> whoWon Game {deck = [], player = cards "10C 9D", dealer = cards "9S KC", stage = Done}
+-- Draw
+--
+-- dealer bust
+-- >>> whoWon Game {deck = [], player = cards "10C 9D", dealer = cards "6S KC JD", stage = Done}
+-- PlayerWins
+--
+-- player bust
+-- >>> whoWon Game {deck = [], player = cards "10C 5D 8C", dealer = cards "7S KC", stage = Done}
+-- DealerWins
+--
+-- both bust
+-- >>> whoWon Game {deck = [], player = cards "10C 5D 8C", dealer = cards "7S KC", stage = Done}
+-- DealerWins
+--
+-- Blackjack
+-- >>> whoWon Game {deck = [], player = cards "10C AC", dealer = cards "6S 5D KC", stage = Done}
+-- PlayerWins
+--
+-- Dealer Blackjack
+-- >>> whoWon Game {deck = [], player = cards "6S 5D KC", dealer = cards "10C AC", stage = Done}
+-- DealerWins
+--
+-- Both Blackjack
+-- >>> whoWon Game {deck = [], player = cards "AS KC", dealer = cards "10C AC", stage = Done}
+-- Draw
+whoWon :: Game -> Winner
+whoWon game
+    | pQualifier == Bust = DealerWins
+    | dQualifier == Bust = PlayerWins
+    | pQualifier == Blackjack && dQualifier == Blackjack = Draw
+    | pQualifier == Blackjack = PlayerWins
+    | dQualifier == Blackjack = DealerWins
+    | pTotal > dTotal = PlayerWins
+    | dTotal > pTotal = DealerWins
+    | pTotal == dTotal = Draw
+    where
+        HandValue pTotal pQualifier = value $ player game
+        HandValue dTotal dQualifier = value $ dealer game
+
+------------------------------------
+--- Display the game
+------------------------------------
