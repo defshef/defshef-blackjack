@@ -304,3 +304,75 @@ whoWon game
 ------------------------------------
 --- Display the game
 ------------------------------------
+
+
+-- | Render the game to string
+--
+-- >>> putStrLn $ render Game { deck = cards "AC", dealer = cards "KH 5D", player = cards "9D 8H", stage = Player }
+-- Dealer: XX 5D
+-- Player: 9D 8H (17)
+--
+-- >>> putStrLn $ render Game { deck = cards "AC", dealer = cards "KH 6S", player = cards "AD 8H", stage = Player }
+-- Dealer: XX 6S
+-- Player: AD 8H (soft 19)
+--
+-- >>> putStrLn $ render Game { deck = cards "AC", dealer = cards "KH 6S", player = cards "AD 8H 7D", stage = Player }
+-- Dealer: XX 6S
+-- Player: AD 8H 7D (hard 16)
+--
+-- >>> putStrLn $ render Game { deck = cards "AC", dealer = cards "KH 6S", player = cards "AD 10H", stage = Player }
+-- Dealer: XX 6S
+-- Player: AD 10H (blackjack!)
+--
+-- >>> putStrLn $ render Game { deck = cards "AC", dealer = cards "KH 6S", player = cards "6D 10H KC", stage = Player }
+-- Dealer: XX 6S
+-- Player: 6D 10H KC (26 BUST)
+--
+-- >>> putStrLn $ render Game { deck = cards "AC", dealer = cards "KH 7S", player = cards "6D 10H KC", stage = Done }
+-- Dealer: KH 7S (17)
+-- Player: 6D 10H KC (26 BUST)
+-- Dealer wins
+--
+-- >>> putStrLn $ render Game { deck = cards "AC", dealer = cards "KH 6S 8H", player = cards "6D 10H", stage = Done }
+-- Dealer: KH 6S 8H (24 BUST)
+-- Player: 6D 10H (16)
+-- Player wins
+--
+-- >>> putStrLn $ render Game { deck = cards "AC", dealer = cards "9H AH", player = cards "6D 4C 10H", stage = Done }
+-- Dealer: 9H AH (soft 20)
+-- Player: 6D 4C 10H (20)
+-- Draw
+render :: Game -> String
+render game =
+    "Dealer: " ++ (renderDealer $ dealer game) ++ "\n" ++
+    "Player: " ++ (renderHand $ player game) ++
+    winLine
+    where
+        winLine = case stage game of
+            Player -> ""
+            _ -> "\n" ++ winner
+        winner = case whoWon game of
+            PlayerWins -> "Player wins"
+            DealerWins -> "Dealer wins"
+            _ -> "Draw"
+        renderDealer = case stage game of
+            Player -> renderObscured
+            _ -> renderHand
+
+renderHand :: Hand -> String
+renderHand hand = cards ++ " (" ++ score ++ ")"
+    where
+        cards = unwords $ map renderCard hand
+        HandValue total qualifier = value hand
+        score = case qualifier of
+            Blackjack -> "blackjack!"
+            Bust -> show total ++ " BUST"
+            Soft -> "soft " ++ show total
+            Hard -> "hard " ++ show total
+            _ -> show total
+
+renderObscured :: Hand -> String
+renderObscured (_:hand) = "XX " ++ (unwords $ map renderCard hand)
+
+renderCard :: Card -> String
+renderCard (Card r s) = show r ++ show s
