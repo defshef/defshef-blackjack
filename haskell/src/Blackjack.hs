@@ -109,10 +109,6 @@ parseSuit "S" = Spades
 --- Calculate hand value
 ------------------------------------
 
-isAce :: Card -> Bool
-isAce (Card Ace _) = True
-isAce _ = False
-
 -- | Calculate hand value
 --
 -- >>> value (cards "2H 2C")
@@ -136,26 +132,30 @@ isAce _ = False
 -- >>> value (cards "AS 5H 7C")
 -- HandValue 13 Hard
 -- >>> value (cards "AS AC")
+-- HandValue 12 Soft
+-- >>> value (cards "AS AC AH AD")
+-- HandValue 14 Soft
+-- >>> value (cards "AS AC KH")
 -- HandValue 12 Hard
+-- >>> value (cards "AS AC AH AD KC")
+-- HandValue 14 Hard
+-- >>> value (cards "AS AC AH AD KC JD")
+-- HandValue 24 Bust
 -- >>> value (cards "10H QC AS")
 -- HandValue 21 Hard
 value :: Hand -> HandValue
 value hand = HandValue total qualifier
     where
         initialTotal = sum $ map cardValue hand
-        ace = any isAce hand
-        hardAce = ace && initialTotal > 21
-        total
-            | hardAce = initialTotal - 10
-            | otherwise = initialTotal
+        aces = length $ filter isAce hand
+        (total, softAces) = hardenAces initialTotal aces
         pair = length hand == 2
         qualifier
             | total > 21 = Bust
             | total == 21 && pair = Blackjack
-            | hardAce = Hard
-            | ace = Soft
+            | softAces > 0 = Soft
+            | aces > 0 = Hard
             | otherwise = None
-
 
 -- | Calculate card value
 cardValue :: Card -> Int
@@ -163,6 +163,17 @@ cardValue (Card (Pip n) _) = n
 cardValue (Card rank _)
     | rank == Ace = 11
     | otherwise = 10
+
+isAce :: Card -> Bool
+isAce (Card Ace _) = True
+isAce _ = False
+
+-- | Attempt to get total under 21 by using value 1 for aces
+hardenAces :: Int -> Int -> (Int, Int)
+hardenAces total 0 = (total, 0)
+hardenAces total aces
+    | total > 21 = hardenAces (total - 10) (aces - 1)
+    | otherwise = (total, aces)
 
 ------------------------------------
 --- Shuffle & deal

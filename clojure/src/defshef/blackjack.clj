@@ -57,22 +57,24 @@
 
 (def ^:private sum (partial reduce +))
 (defn- is-ace [card] (-> card :rank (= :A)))
+(defn- harden-aces
+  "Attempt to un-bust by using low value of aces"
+  [total aces]
+  (if (or (<= total 21) (zero? aces))
+    [total aces]
+    (recur (- total 10) (dec aces))))
 
 (defn value
   "How much is a hand worth?"
   [hand]
   (let [total (sum (map card-value hand))
         pair (= 2 (count hand))
-        bust (> total 21)
-        ace (some is-ace hand)
-        hard-ace (and bust ace)
-        ; bust with an ace? Use lower value instead
-        total (if hard-ace (- total 10) total)
-        bust (> total 21)
+        aces (count (filter is-ace hand))
+        [total aces-remaining] (harden-aces total aces)
         qualifier (cond (and (= 21 total) pair) :blackjack
-                        bust :bust
-                        hard-ace :hard
-                        ace :soft
+                        (> total 21) :bust
+                        (pos? aces-remaining) :soft
+                        (pos? aces) :hard
                         :else nil)]
     [total qualifier]))
 
@@ -87,7 +89,11 @@
 (expect [21 :blackjack] (value (cards :A :H, 10 :S)))
 (expect [16 :soft] (value (cards :A :S, 5 :H)))
 (expect [13 :hard] (value (cards :A :S, 5 :H, 7 :H)))
-(expect [12 :hard] (value (cards :A :S, :A :H)))
+(expect [12 :soft] (value (cards :A :S, :A :H)))
+(expect [14 :soft] (value (cards :A :S, :A :H, :A :C, :A :D)))
+(expect [12 :hard] (value (cards :A :S, :A :H, :K :D)))
+(expect [14 :hard] (value (cards :A :S, :A :H, :A :C, :A :D, :Q :H)))
+(expect [24 :bust] (value (cards :A :S, :A :H, :A :C, :A :D, :Q :H, :J :H)))
 (expect [21 :hard] (value (cards 10 :H, :Q :C, :A :S)))
 
 ;; Shuffle and deal

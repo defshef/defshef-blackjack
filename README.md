@@ -60,9 +60,16 @@ Here are some examples you can use for testing. Ideally you should turn these in
 * 9H AC 3S KS = 23, bust
 * JH 8C 9S = 27, bust
 * AS KS = 21, blackjack
+
+Getting all the hard/soft cases for aces right can be a bit fiddly, feel free to skip over these for now and come back to it when you have a working game.
+
 * AS 5H = 16, soft
 * AS 5H 7C = 13, hard
-* AS AC = 12, hard
+* AS AC = 12, soft
+* AS AC AD AH = 14, soft
+* AS AC KC = 12, hard
+* AS AC AH AD KC = 14, hard
+* AS AC AH AD KC JH = 24, bust
 * 10H QC AS = 21, hard
 
 ### Shuffle and deal
