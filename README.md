@@ -15,7 +15,7 @@ One thing that should become immediately apparent, is that this list is mostly v
     * [Sample Solution](./clojure)
  * Haskell
     * [Quickstart](./haskell/quickstart.md)
-    * (incomplete) [Sample Solution](./haskell)
+    * [Sample Solution](./haskell)
  * Any Others? Pull requests welcome!
 
 ## Sub-problems
