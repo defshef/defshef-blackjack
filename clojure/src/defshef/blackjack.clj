@@ -44,7 +44,7 @@
   (condp #(%1 %2) rank
     number? rank
     #{:J :Q :K} 10
-    #{:A} 11
+    #{:A} 1
     (throw (ex-info "Unknown rank" {:card card}))))
 
 (expect 5 (card-value (card 5 :C)))
@@ -52,29 +52,24 @@
 (expect 10 (card-value (card :K :S)))
 (expect 10 (card-value (card :Q :C)))
 (expect 10 (card-value (card :J :D)))
-(expect 11 (card-value (card :A :S)))
+(expect 1 (card-value (card :A :S)))
 (expect Throwable (card-value {:rank :x}))
 
 (def ^:private sum (partial reduce +))
 (defn- is-ace [card] (-> card :rank (= :A)))
-(defn- harden-aces
-  "Attempt to un-bust by using low value of aces"
-  [total aces]
-  (if (or (<= total 21) (zero? aces))
-    [total aces]
-    (recur (- total 10) (dec aces))))
 
 (defn value
   "How much is a hand worth?"
   [hand]
   (let [total (sum (map card-value hand))
         pair (= 2 (count hand))
-        aces (count (filter is-ace hand))
-        [total aces-remaining] (harden-aces total aces)
+        ace (some is-ace hand)
+        soft (and ace (<= total 11))
+        total (if soft (+ total 10) total)
         qualifier (cond (and (= 21 total) pair) :blackjack
                         (> total 21) :bust
-                        (pos? aces-remaining) :soft
-                        (pos? aces) :hard
+                        soft :soft
+                        ace :hard
                         :else nil)]
     [total qualifier]))
 
