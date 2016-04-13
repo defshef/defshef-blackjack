@@ -147,33 +147,29 @@ value :: Hand -> HandValue
 value hand = HandValue total qualifier
     where
         initialTotal = sum $ map cardValue hand
-        aces = length $ filter isAce hand
-        (total, softAces) = hardenAces initialTotal aces
+        ace = any isAce hand
+        soft = ace && initialTotal <= 11
+        total
+            | soft = initialTotal + 10
+            | otherwise = initialTotal
         pair = length hand == 2
         qualifier
             | total > 21 = Bust
             | total == 21 && pair = Blackjack
-            | softAces > 0 = Soft
-            | aces > 0 = Hard
+            | soft = Soft
+            | ace = Hard
             | otherwise = None
 
 -- | Calculate card value
 cardValue :: Card -> Int
 cardValue (Card (Pip n) _) = n
 cardValue (Card rank _)
-    | rank == Ace = 11
+    | rank == Ace = 1
     | otherwise = 10
 
 isAce :: Card -> Bool
 isAce (Card Ace _) = True
 isAce _ = False
-
--- | Attempt to get total under 21 by using value 1 for aces
-hardenAces :: Int -> Int -> (Int, Int)
-hardenAces total 0 = (total, 0)
-hardenAces total aces
-    | total > 21 = hardenAces (total - 10) (aces - 1)
-    | otherwise = (total, aces)
 
 ------------------------------------
 --- Shuffle & deal
