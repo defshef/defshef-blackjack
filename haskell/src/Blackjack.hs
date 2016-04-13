@@ -5,6 +5,7 @@ module Blackjack
     ) where
 
 import Text.Regex.Posix ((=~))
+import Text.Read (readMaybe)
 import Data.List.Split (endBy)
 import System.Random.Shuffle as Shuffle
 
@@ -372,3 +373,45 @@ renderObscured (_:hand) = "XX " ++ (unwords $ map renderCard hand)
 
 renderCard :: Card -> String
 renderCard (Card r s) = show r ++ show s
+
+------------------------------------
+--- Tying it all together
+------------------------------------
+
+data Action = Hit | Stand deriving (Show, Read, Eq)
+actualAction :: Action -> (Game -> Game)
+actualAction Hit = hit
+actualAction Stand = stand
+
+playGame :: IO ()
+playGame = do
+    deck <- shuffledDeck
+    gameLoop $ deal deck
+
+gameLoop :: Game -> IO ()
+gameLoop game = do
+    putStrLn $ render game
+    let actions = possibleActions game
+    if null actions then do
+        putStrLn $ render $ playDealer game
+    else do
+        actionName <- acceptAction actions
+        let action = actualAction actionName
+        gameLoop $ action game
+
+acceptAction :: [Action] -> IO Action
+acceptAction actions = do
+    putStrLn $ "Choose one of " ++
+        (unwords $ map show actions)
+    actionStr <- getLine
+    case readMaybe actionStr of
+        Just action -> return action
+        Nothing -> acceptAction actions
+
+possibleActions :: Game -> [Action]
+possibleActions game = case stage game of
+    Player -> case value $ player game of
+        HandValue _ Bust -> [Stand]
+        HandValue _ Blackjack -> [Stand]
+        HandValue _ _ -> [Hit, Stand]
+    _ -> []
