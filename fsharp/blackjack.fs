@@ -49,7 +49,7 @@ module Blackjack =
                 if lhs = rhs then
                     false
                 else
-                    match (lhs, lhs) with
+                    match (lhs, rhs) with
                     | (_, Bust(_)) -> true
                     | (Bust(_), _) -> false
                     | (BlackJack, _) -> true
@@ -104,7 +104,12 @@ module Blackjack =
             let cc = cards |> List.map cardString
             String.Join(",", cc)
 
+        let playerString p =
+            sprintf "%i : %s" p.Id (handString p.Hand)
+
         let printGame (game : Game) =
+            let origColor = Console.ForegroundColor
+            Console.ForegroundColor <- ConsoleColor.Yellow
             printfn "GAMESTATE:"
 
             let (Deck(deckCards)) = game.Deck
@@ -112,14 +117,16 @@ module Blackjack =
 
             printfn "%i players with turns left" (game.PlayersToGo.Length)
             game.PlayersToGo
-            |> List.iter (fun p -> printfn "%i : %s" p.Id (handString p.Hand))
+            |> List.map playerString
+            |> List.iter (printfn "%s")
 
-            printfn "%i players have hand their turns" (game.PlayersFinished.Length)
+            printfn "%i players have had their turns" (game.PlayersFinished.Length)
             game.PlayersFinished
-            |> List.mapi (fun i res -> (i, res))
-            |> List.iter (fun (i, res) -> printfn "%i : %A" i res)
+            |> List.map playerString
+            |> List.iter (printfn "%s")
 
             printfn "Dealer Hand: %s" (handString game.Dealer)
+            Console.ForegroundColor <- origColor
             ()
 
     let newDeck : Deck =
@@ -225,8 +232,11 @@ module Blackjack =
             sprintf "Player hand has a value of %A" handValue |> prompt
 
             match handValue with
-            | Bust(_) | BlackJack ->
+            | Bust(_) ->
                 "Player is bust!" |> prompt
+                (hand, deck)
+            | BlackJack ->
+                "BlackJack!!!" |> prompt
                 (hand, deck)
             | Value(soft, hard) ->
                 let (play, playState') = nextPlay playState hand
@@ -255,7 +265,7 @@ module Blackjack =
                 let newGame =
                     { g with
                         PlayersToGo = otherPlayers
-                        PlayersFinished = finishedPlayer :: game.PlayersFinished
+                        PlayersFinished = finishedPlayer :: g.PlayersFinished
                         Deck = deck' }
                 playGameRec newGame
             | [] ->
@@ -266,8 +276,10 @@ module Blackjack =
     let playGame playerPlay dealerPlay prompt game : GameResult =
         let game' = playPlayers playerPlay prompt game
 
+        Print.printGame game'
+
         let allPlayersBust =
-            game.PlayersFinished
+            game'.PlayersFinished
             |> List.forall (fun p -> p.Hand |> getHandValue |> HandValue.IsBustValue)
 
         if allPlayersBust then
@@ -286,9 +298,12 @@ module Blackjack =
             | Value(_) as v ->
                 let winningPlayers =
                     game'.PlayersFinished
-                    |> List.filter (fun p -> p.Hand |> getHandValue |> HandValue.LhsIsGreater v |> not)
-                PlayersWin(winningPlayers)
-
+                    |> List.filter (fun p -> HandValue.LhsIsGreater (p.Hand |> getHandValue) v)
+                printfn "== %A ==" winningPlayers
+                if winningPlayers.Length > 0 then
+                    PlayersWin(winningPlayers)
+                else
+                    HouseWins
 
     [<EntryPoint>]
     let main argv =
