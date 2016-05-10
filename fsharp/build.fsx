@@ -33,6 +33,20 @@ Target "Deploy" (fun _ ->
         |> Zip buildDir (deployDir + "ApplicationName." + version + ".zip")
 )
 
+Target "Watch" (fun _ ->
+    use watcher = !! "/**/*.fs" |> WatchChanges (fun changes ->
+        tracefn "%A" changes
+        printfn "%A" changes
+
+        MSBuildDebug buildDir "Build" appReferences
+            |> Log "AppBuild-Output: "
+    )
+
+    System.Console.ReadLine() |> ignore //Needed to keep FAKE from exiting
+
+    watcher.Dispose() // Use to stop the watch from elsewhere, ie another task.
+)
+
 // Build order
 "Clean"
   ==> "Build"

@@ -4,7 +4,7 @@ module Helpers =
     let private rand = new System.Random()
 
     let shuffle a =
-        let swap (a: _[]) x y =
+        let swap (a : _[]) x y =
             let tmp = a.[x]
             a.[x] <- a.[y]
             a.[y] <- tmp
@@ -97,12 +97,14 @@ module Blackjack =
                 match face with
                 | Ace -> "Ace"
                 | Number(i) -> i.ToString()
-                | Face(p) -> sprintf "%A"  p
-            sprintf "(%s %s)" f s
+                | Face(Jack) -> "J"
+                | Face(Queen) -> "Q"
+                | Face(King) -> "K"
+            sprintf "%s%s" f s
 
         let handString (Hand(cards)) =
             let cc = cards |> List.map cardString
-            String.Join(",", cc)
+            String.Join(", ", cc)
 
         let playerString p =
             sprintf "%i : %s" p.Id (handString p.Hand)
@@ -171,17 +173,17 @@ module Blackjack =
                     if i = 0 then
                         (acc, d)
                     else
-                        let (c, d') = takeTop d
-                        getTopNRec (i - 1) d' (c :: acc)
+                        let (c, d) = takeTop d
+                        getTopNRec (i - 1) d (c :: acc)
                 getTopNRec n d []
 
-            let (firstCards, d') = getTopN numberOfHands deck
-            let (secondCards, d') = getTopN numberOfHands d'
+            let (firstCards, d) = getTopN numberOfHands deck
+            let (secondCards, d) = getTopN numberOfHands d
             let hands =
                 firstCards
                 |> List.zip secondCards
                 |> List.map (fun (firstCard, secondCard) -> [firstCard; secondCard] |> Hand )
-            (hands, d')
+            (hands, d)
 
     let getHandValue (Hand(cards)) : HandValue =
         let getHardValue (face : Face) : int =
@@ -218,13 +220,13 @@ module Blackjack =
         else
             Value(softValue, hardValue)
 
-    let updateHand (Hand(cards)) (play : Play) deck =
+    let updateHand (Hand(cards)) play deck : (Hand * Deck) =
         match play with
         | Stand ->
             (Hand(cards), deck)
         | Hit ->
-            let (card, deck') = takeTop deck
-            (Hand(card :: cards), deck')
+            let (card, deck) = takeTop deck
+            (Hand(card :: cards), deck)
 
     let playHand (initialHand : Hand) (nextPlay : 'p -> Hand -> (Play * 'p)) prompt (deck : Deck) (initialPlayState : 'p) : (Hand * Deck) =
         let rec playRec hand deck (playState : 'p) =
@@ -239,17 +241,17 @@ module Blackjack =
                 "BlackJack!!!" |> prompt
                 (hand, deck)
             | Value(soft, hard) ->
-                let (play, playState') = nextPlay playState hand
+                let (play, playState) = nextPlay playState hand
                 match play with
                 | Stand ->
                     "Players Stands" |> prompt
                     (hand, deck)
                 | Hit ->
-                    let (card, deck') = takeTop deck
+                    let (card, deck) = takeTop deck
                     let (Hand(cards)) = hand
                     let newHand = Hand(card :: cards)
                     sprintf "Player hits, gets a %s" (Print.cardString card) |> prompt
-                    playRec newHand deck' playState'
+                    playRec newHand deck playState
 
         playRec initialHand deck initialPlayState
 
@@ -258,15 +260,15 @@ module Blackjack =
         let rec playGameRec g =
             match g.PlayersToGo with
             | nextPlayer :: otherPlayers ->
-                sprintf "Player %i's turn" nextPlayer.Id |> prompt
-                let (finalHand, deck') = playHand nextPlayer.Hand playerPlay prompt g.Deck ()
+                sprintf "Player %is turn" nextPlayer.Id |> prompt
+                let (finalHand, deck) = playHand nextPlayer.Hand playerPlay prompt g.Deck ()
                 let finishedPlayer =
                     { nextPlayer with Hand = finalHand }
                 let newGame =
                     { g with
                         PlayersToGo = otherPlayers
                         PlayersFinished = finishedPlayer :: g.PlayersFinished
-                        Deck = deck' }
+                        Deck = deck }
                 playGameRec newGame
             | [] ->
                 prompt "All players have finished their turns"
@@ -274,32 +276,31 @@ module Blackjack =
         playGameRec game
 
     let playGame playerPlay dealerPlay prompt game : GameResult =
-        let game' = playPlayers playerPlay prompt game
+        let game = playPlayers playerPlay prompt game
 
-        Print.printGame game'
+        Print.printGame game
 
         let allPlayersBust =
-            game'.PlayersFinished
+            game.PlayersFinished
             |> List.forall (fun p -> p.Hand |> getHandValue |> HandValue.IsBustValue)
 
         if allPlayersBust then
             prompt "All players are bust"
             HouseWins
         else
-            let (dealerResult, deck') = playHand game.Dealer dealerPlay prompt (game'.Deck) ()
+            let (dealerResult, deck) = playHand game.Dealer dealerPlay prompt (game.Deck) ()
             match dealerResult |> getHandValue with
             | BlackJack ->
                 HouseWins
             | Bust(_) ->
                 let winningPlayers =
-                    game'.PlayersFinished
+                    game.PlayersFinished
                     |> List.filter (fun p -> p.Hand |> getHandValue |> HandValue.IsBustValue |> not)
                 PlayersWin(winningPlayers)
             | Value(_) as v ->
                 let winningPlayers =
-                    game'.PlayersFinished
+                    game.PlayersFinished
                     |> List.filter (fun p -> HandValue.LhsIsGreater (p.Hand |> getHandValue) v)
-                printfn "== %A ==" winningPlayers
                 if winningPlayers.Length > 0 then
                     PlayersWin(winningPlayers)
                 else
@@ -308,21 +309,6 @@ module Blackjack =
     [<EntryPoint>]
     let main argv =
         Console.WriteLine "Write to BackJack"
-
-        let deck = newDeck |> shuffle
-
-        Console.WriteLine "How many players?"
-        let line = Console.ReadLine()
-        let playerCount = Int32.Parse line
-
-        let (hands, deck) = dealInitialHands (playerCount + 1) deck
-
-        let game = {
-            Deck = deck
-            Dealer = hands.Head
-            PlayersToGo = hands.Tail |> List.mapi (fun i h -> { Id = i; Hand = h})
-            PlayersFinished = []
-        }
 
         let playerPlay () hand =
             let rec promptPlay () =
@@ -352,8 +338,27 @@ module Blackjack =
                 printfn "Dealer stands"
                 (Stand, ())
 
-        let prompt msg =
-            printfn "%s" msg
+        let prompt =
+            let i = ref 0
+            fun msg ->
+                i := !i + 1
+                printfn "%i) %s" !i msg
+
+        Console.WriteLine "How many players?"
+        let line = Console.ReadLine()
+        let playerCount = Int32.Parse line
+
+        let (hands, deck) =
+            newDeck
+            |> shuffle
+            |> dealInitialHands (playerCount + 1)
+
+        let game = {
+            Deck = deck
+            Dealer = hands.Head
+            PlayersToGo = hands.Tail |> List.mapi (fun i h -> { Id = i; Hand = h})
+            PlayersFinished = []
+        }
 
         printf ""
         Print.printGame game
